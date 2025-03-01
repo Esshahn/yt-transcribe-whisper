@@ -3,11 +3,9 @@ import yt_dlp
 import whisper
 import os
 import argparse
-from datetime import datetime
 from pathlib import Path
 import subprocess
 import signal
-from functools import partial
 import time
 
 class TranscriptionTimeoutError(Exception):
@@ -67,66 +65,33 @@ def download_audio(video_url, output_path='downloads'):
     os.makedirs(output_path, exist_ok=True)
     
     ydl_opts = {
-        'format': 'bestaudio[ext=m4a]/bestaudio',
+        'format': 'm4a/bestaudio[ext=m4a]',
         'paths': {'home': output_path},
         'outtmpl': {
-            'default': '%(title)s.mp3'
+            'default': '%(title)s.%(ext)s'
         },
         'cookiesfrombrowser': ('chrome',),
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }]
     }
     
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        try:
-            print("Starting download...")
-            info = ydl.extract_info(video_url, download=True)
-            print("Download completed")
-            
-            # Get the final filename
-            filename = os.path.join(output_path, f"{info['title']}.mp3")
-            print(f"Processing file: {filename}")
-            
-            if not os.path.exists(filename):
-                raise FileNotFoundError(f"Expected output file not found: {filename}")
-            
-            # Create a temporary filename for the trimmed version
-            trimmed_filename = os.path.join(output_path, f"trimmed_{os.path.basename(filename)}")
-            
-            print("Removing silence with FFmpeg...")
-            # Use ffmpeg to remove silence from start and end
-            ffmpeg_cmd = [
-                'ffmpeg', '-y', '-i', filename,
-                '-af', 'silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.3,areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.3,areverse',
-                '-c:a', 'libmp3lame', '-q:a', '2',
-                trimmed_filename
-            ]
-            
-            try:
-                result = subprocess.run(ffmpeg_cmd, check=True, capture_output=True, text=True)
-                print("FFmpeg processing completed")
-            except subprocess.CalledProcessError as e:
-                print(f"FFmpeg error: {e.stderr}")
-                return filename  # Return original file if FFmpeg fails
-            
-            # Replace original file with trimmed version
-            try:
-                os.replace(trimmed_filename, filename)
-                print("Trimmed file saved successfully")
-            except Exception as e:
-                print(f"Error replacing file: {e}")
-                if os.path.exists(trimmed_filename):
-                    os.remove(trimmed_filename)
-                return filename
-            
-            return filename
-            
-        except Exception as e:
-            print(f"Error in download_audio: {str(e)}")
-            raise
+        print("Starting download...")
+        info = ydl.extract_info(video_url, download=True)
+        filename = os.path.join(output_path, f"{info['title']}.m4a")
+        print("Download completed")
+        
+        # Create a temporary filename for the trimmed version
+        trimmed_filename = os.path.join(output_path, f"trimmed_{os.path.basename(filename)}")
+        
+        print("Removing silence with FFmpeg...")
+        subprocess.run([
+            'ffmpeg', '-y', '-i', filename,
+            '-af', 'silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.3,areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.3,areverse',
+            '-c:a', 'aac',
+            trimmed_filename
+        ], check=True)
+        
+        os.replace(trimmed_filename, filename)
+        return filename
 
 def transcribe_audio(audio_path, output_dir='transcripts', test_mode=False):
     """Transcribe the audio file using Whisper and save to a text file."""

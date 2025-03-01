@@ -1,6 +1,6 @@
 .env
 venv/
 downloads/
-transcriptions/
+transcripts/
 last-video.txt
 .DS_Store
