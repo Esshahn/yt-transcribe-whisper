@@ -1,14 +1,10 @@
 import json
 import yt_dlp
 import os
-import argparse
 import subprocess
 from pathlib import Path
+import sys
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='YouTube video downloader')
-    parser.add_argument('--config', default='config.json', help='Path to config file')
-    return parser.parse_args()
 
 def load_config(config_path='config.json'):
     with open(config_path, 'r', encoding='utf-8') as f:
@@ -75,11 +71,11 @@ def download_audio(video_url, output_path='downloads'):
         return filename
 
 def main():
-    args = parse_args()
-    
+
     try:
-        config = load_config(args.config)
+        config = load_config()
         downloaded_files = []
+        new_videos_found = False
         
         for channel in config['channels']:
             channel_id = channel['channel_id']
@@ -102,13 +98,19 @@ def main():
                 audio_path = download_audio(latest_video['url'])
                 save_last_video_id(video_id)
                 downloaded_files.append(audio_path)
+                new_videos_found = True
                 print(f"Successfully downloaded video: {latest_video['title']}")
             else:
                 print(f"No new videos found matching '{search_phrase}'")
+        
+        # Exit with code 1 if no new videos were found to stop the pipeline
+        if not new_videos_found:
+            print("No new videos to process. Stopping pipeline...")
+            sys.exit(1)
                  
     except Exception as e:
         print(f"Error in download_video: {str(e)}")
-        raise
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

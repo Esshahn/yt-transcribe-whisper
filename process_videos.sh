@@ -3,7 +3,6 @@
 echo "Starting video download process..."
 python3 download_video.py
 if [ $? -ne 0 ]; then
-    echo "Error during download process"
     exit 1
 fi
 
