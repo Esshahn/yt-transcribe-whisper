@@ -3,5 +3,4 @@ venv/
 downloads/
 transcripts/
 last-video.txt
-pending_transcriptions.txt
 .DS_Store

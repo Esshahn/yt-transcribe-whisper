@@ -13,8 +13,8 @@ def initialize_slack_client():
         raise ValueError("Slack Bot Token not found in .env file")
     return WebClient(token=slack_token)
 
-def post_to_slack(client, channel_id, summary_path, video_url):
-    """Post summary and video URL to Slack channel."""
+def post_to_slack(client, channel_id, summary_path):
+    """Post summary to Slack channel."""
     try:
         with open(summary_path, 'r', encoding='utf-8') as f:
             summary = f.read()
@@ -35,20 +35,14 @@ def main():
         slack_channel_id = os.getenv("SLACK_CHANNEL_ID")
         if not slack_channel_id:
             raise ValueError("Slack Channel ID not found in .env file")
-
-        # Read from pending_posts.txt
-        with open('pending_posts.txt', 'r', encoding='utf-8') as f:
-            lines = f.read().splitlines()
-            for line in lines:
-                summary_path, video_url = line.split('|')
-                if os.path.exists(summary_path):
-                    print(f"Posting summary from {summary_path} to Slack")
-                    post_to_slack(slack_client, slack_channel_id, summary_path, video_url)
-                else:
-                    print(f"Summary file not found: {summary_path}")
-
-        # Clean up the temporary file
-        os.remove('pending_posts.txt')
+        
+        # Look for summary files in transcripts directory
+        transcripts_dir = 'transcripts'
+        for file in os.listdir(transcripts_dir):
+            if file.endswith('_summary.txt'):
+                summary_path = os.path.join(transcripts_dir, file)
+                print(f"Posting summary from {summary_path} to Slack")
+                post_to_slack(slack_client, slack_channel_id, summary_path)
 
     except Exception as e:
         print(f"Error in slack_poster: {str(e)}")

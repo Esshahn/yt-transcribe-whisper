@@ -105,12 +105,7 @@ def main():
                 print(f"Successfully downloaded video: {latest_video['title']}")
             else:
                 print(f"No new videos found matching '{search_phrase}'")
-        
-        # Write downloaded files to a temporary file for the transcriber
-        with open('pending_transcriptions.txt', 'w', encoding='utf-8') as f:
-            for file_path in downloaded_files:
-                f.write(f"{file_path}\n")
-                
+                 
     except Exception as e:
         print(f"Error in download_video: {str(e)}")
         raise
