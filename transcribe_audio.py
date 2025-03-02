@@ -69,18 +69,11 @@ def main():
     args = parse_args()
     
     try:
-        # Read files to transcribe from the temporary file
-        with open('pending_transcriptions.txt', 'r', encoding='utf-8') as f:
-            files_to_transcribe = f.read().splitlines()
-        
-        for audio_path in files_to_transcribe:
-            if os.path.exists(audio_path):
+        downloads_dir = 'downloads'
+        for file in os.listdir(downloads_dir):
+            if file.endswith(('.mp3', '.m4a')):
+                audio_path = os.path.join(downloads_dir, file)
                 transcribe_audio(audio_path, test_mode=args.test)
-            else:
-                print(f"File not found: {audio_path}")
-        
-        # Clean up the temporary file
-        os.remove('pending_transcriptions.txt')
         
     except Exception as e:
         print(f"Error in transcribe_audio: {str(e)}")
