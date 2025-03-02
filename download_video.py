@@ -105,7 +105,8 @@ def main():
                 print(f"Successfully downloaded video: {latest_video['title']}")
             else:
                 print(f"No new videos found matching '{search_phrase}'")
-                 
+        
+         
     except Exception as e:
         print(f"Error in download_video: {str(e)}")
         raise

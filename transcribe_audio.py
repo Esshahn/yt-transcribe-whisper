@@ -1,31 +1,24 @@
 import whisper
 import os
-import time
-import signal
 from pathlib import Path
-import argparse
+import time
 
-class TranscriptionTimeoutError(Exception):
-    pass
-
-def timeout_handler(signum, frame):
-    raise TranscriptionTimeoutError("Transcription timeout reached")
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='Audio transcription tool')
-    parser.add_argument('--test', action='store_true', help='Test mode: Stop transcription after 1 minute')
-    return parser.parse_args()
-
-def transcribe_audio(audio_path, output_dir='transcripts', test_mode=False):
+def transcribe_audio(audio_path: str, output_dir: str = 'transcripts') -> str:
+    """
+    Transcribe an audio file using Whisper model.
+    
+    Args:
+        audio_path: Path to the audio file
+        output_dir: Directory to save the transcript
+        
+    Returns:
+        Path to the generated transcript file
+    """
     print(f"Loading Whisper model...")
     model = whisper.load_model("turbo")
     
     print(f"Transcribing {audio_path}...")
     start_time = time.time()
-    
-    if test_mode:
-        signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(60)
     
     try:
         result = model.transcribe(
@@ -34,11 +27,9 @@ def transcribe_audio(audio_path, output_dir='transcripts', test_mode=False):
             fp16=False,
             language='de',
             condition_on_previous_text=True,
-            initial_prompt="Dies ist eine Aufzeichnung einer Ausschusssitzung."
+            initial_prompt="Dies ist eine Aufzeichnung einer Ausschusssitzung.",
+            beam_size=1  # Default is 5, reducing saves time
         )
-        
-        if test_mode:
-            signal.alarm(0)
         
         os.makedirs(output_dir, exist_ok=True)
         audio_filename = Path(audio_path).stem
@@ -54,26 +45,17 @@ def transcribe_audio(audio_path, output_dir='transcripts', test_mode=False):
         print(f"Transcription saved to {transcript_path}")
         return transcript_path
         
-    except TranscriptionTimeoutError:
-        if test_mode:
-            signal.alarm(0)
-        print("Test mode: Transcription stopped after 1 minute")
-        return None
     except Exception as e:
-        if test_mode:
-            signal.alarm(0)
         print(f"Error in transcription: {str(e)}")
         raise
 
 def main():
-    args = parse_args()
-    
     try:
         downloads_dir = 'downloads'
         for file in os.listdir(downloads_dir):
             if file.endswith(('.mp3', '.m4a')):
                 audio_path = os.path.join(downloads_dir, file)
-                transcribe_audio(audio_path, test_mode=args.test)
+                transcribe_audio(audio_path)
         
     except Exception as e:
         print(f"Error in transcribe_audio: {str(e)}")
