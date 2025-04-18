@@ -20,12 +20,12 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-#echo "Posting to Slack channel..."
-#python3 slack_poster.py
-#if [ $? -ne 0 ]; then
-#    echo "Error during posting to slack"
-#    exit 1
-#fi
+echo "Posting to Slack channel..."
+python3 slack_poster.py
+if [ $? -ne 0 ]; then
+    echo "Error during posting to slack"
+    exit 1
+fi
 
 echo "Cleaning up downloads directory..."
 python3 cleanup.py

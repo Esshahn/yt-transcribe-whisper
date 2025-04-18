@@ -1,8 +1,6 @@
 yt-dlp
 openai-whisper
 torch
-faster-whisper
-tiktoken
 python-dotenv
 slack-sdk
 openai
