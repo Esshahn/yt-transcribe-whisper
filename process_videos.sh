@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Set working directory
+cd "$(dirname "$0")"
+
+# Activate virtual environment
+source venv/bin/activate
+
+# Create logs directory if it doesn't exist
+mkdir -p logs
+
 echo "Starting video download process..."
 python3 download_video.py
 if [ $? -ne 0 ]; then

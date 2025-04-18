@@ -58,6 +58,8 @@ SLACK_CHANNEL_ID=your_slack_channel_id
 
 ## Usage
 
+### Manual Execution
+
 Run the entire pipeline with:
 ```bash
 ./process_videos.sh
@@ -70,6 +72,37 @@ This script will:
 4. Generate a summary
 5. Post the summary to Slack
 6. Clean up downloaded files
+
+### Automated Execution (Cron Job)
+
+To run the script automatically every day at 09:00:
+
+1. Make the script executable:
+```bash
+chmod +x /path/to/process_videos.sh
+```
+
+2. Open your crontab:
+```bash
+crontab -e
+```
+
+3. Add this line:
+```
+0 9 * * * cd /absolute/path/to/project && ./process_videos.sh >> logs/cron.log 2>&1
+```
+
+4. Verify your crontab entry:
+```bash
+crontab -l
+```
+
+5. Monitor the logs:
+```bash
+tail -f logs/cron.log
+```
+
+Note: Replace `/absolute/path/to/project` with the actual path to your project directory.
 
 ## Project Structure
 
@@ -86,6 +119,7 @@ This script will:
 .
 ├── downloads/           # Temporary storage for downloaded files
 ├── transcripts/        # Storage for transcripts and summaries
+├── logs/              # Cron job and application logs
 ├── config.json         # Channel configuration
 ├── requirements.txt    # Python dependencies
 └── .env               # Environment variables (not in repo)
@@ -99,8 +133,20 @@ This script will:
 
 ## Contributing
 
-[Add your contribution guidelines here]
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 ## License
 
-[Add your license information here]
+MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
