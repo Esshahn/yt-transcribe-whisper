@@ -36,7 +36,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-echo "Cleaning up downloads directory..."
+echo "Cleaning up downloads and transcripts directories..."
 python3 cleanup.py
 if [ $? -ne 0 ]; then
     echo "Error during cleanup"
