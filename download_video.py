@@ -39,36 +39,76 @@ def search_latest_video(channel_id, search_phrase):
         
         return matching_videos[0] if matching_videos else None
 
+def process_audio(filename, output_path, remove_silence=False):
+    """
+    Process audio file - optionally remove silence at start and end.
+
+    Note: Silence removal is disabled by default as it can cause issues with long audio files
+    and is often not necessary for transcription quality.
+    """
+    if not remove_silence:
+        print("Skipping silence removal (disabled by default)")
+        return filename
+
+    trimmed_filename = os.path.join(output_path, f"trimmed_{os.path.basename(filename)}")
+
+    print("Removing silence with FFmpeg...")
+    # Safer approach: only remove silence at start and end without areverse
+    # This avoids memory issues with long audio files
+    subprocess.run([
+        'ffmpeg', '-y', '-i', filename,
+        '-af', 'silenceremove=start_periods=1:start_threshold=-50dB:start_silence=1:stop_periods=-1:stop_threshold=-50dB:stop_silence=1',
+        '-c:a', 'aac',
+        trimmed_filename
+    ], check=True, capture_output=True)
+
+    os.replace(trimmed_filename, filename)
+    return filename
+
 def download_audio(video_url, output_path='downloads'):
     os.makedirs(output_path, exist_ok=True)
-    
+
     ydl_opts = {
-        'format': 'm4a/bestaudio[ext=m4a]',
+        'format': 'bestaudio/best',
         'paths': {'home': output_path},
         'outtmpl': {
             'default': '%(title)s.%(ext)s'
         },
-        'cookiesfrombrowser': ('chrome',),
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android'],
+                'skip': ['hls', 'dash']
+            }
+        },
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'm4a',
+            'preferredquality': '192',
+        }],
+        'prefer_free_formats': False,
+        'quiet': False,
+        'no_warnings': False,
     }
-    
+
+    # Try with cookies first, fallback to without if needed
+    try:
+        ydl_opts['cookiesfrombrowser'] = ('chrome',)
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            print("Starting download with cookies...")
+            info = ydl.extract_info(video_url, download=True)
+            filename = os.path.join(output_path, f"{info['title']}.m4a")
+            print("Download completed")
+            return process_audio(filename, output_path)
+    except Exception as e:
+        print(f"Download with cookies failed, trying without cookies: {e}")
+        del ydl_opts['cookiesfrombrowser']
+
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        print("Starting download...")
+        print("Starting download without cookies...")
         info = ydl.extract_info(video_url, download=True)
         filename = os.path.join(output_path, f"{info['title']}.m4a")
         print("Download completed")
-        
-        trimmed_filename = os.path.join(output_path, f"trimmed_{os.path.basename(filename)}")
-        
-        print("Removing silence with FFmpeg...")
-        subprocess.run([
-            'ffmpeg', '-y', '-i', filename,
-            '-af', 'silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.3,areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.3,areverse',
-            '-c:a', 'aac',
-            trimmed_filename
-        ], check=True)
-        
-        os.replace(trimmed_filename, filename)
-        return filename
+        return process_audio(filename, output_path)
 
 def main():
 

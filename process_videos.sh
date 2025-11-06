@@ -6,6 +6,10 @@ cd "$(dirname "$0")"
 # Activate virtual environment
 source venv/bin/activate
 
+# Update yt-dlp to latest version
+echo "Updating yt-dlp to latest version..."
+pip install --upgrade yt-dlp --quiet
+
 # Create logs directory if it doesn't exist
 mkdir -p logs
 
