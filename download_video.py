@@ -25,7 +25,12 @@ def search_latest_video(channel_id, search_phrase):
     ydl_opts = {
         'quiet': True,
         'extract_flat': True,
-        'force_generic_extractor': False
+        'force_generic_extractor': False,
+        'extractor_args': {
+            'youtube': {
+                'lang': ['de'],
+            }
+        }
     }
     
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
