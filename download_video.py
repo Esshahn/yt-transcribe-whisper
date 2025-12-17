@@ -73,47 +73,73 @@ def process_audio(filename, output_path, remove_silence=False):
 def download_audio(video_url, output_path='downloads'):
     os.makedirs(output_path, exist_ok=True)
 
-    ydl_opts = {
-        'format': 'bestaudio/best',
+    # Base options that work with current YouTube restrictions
+    base_opts = {
         'paths': {'home': output_path},
         'outtmpl': {
             'default': '%(title)s.%(ext)s'
-        },
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['android'],
-                'skip': ['hls', 'dash']
-            }
         },
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'm4a',
             'preferredquality': '192',
         }],
-        'prefer_free_formats': False,
         'quiet': False,
         'no_warnings': False,
+        'retries': 10,
+        'fragment_retries': 10,
+        'socket_timeout': 30,
     }
 
-    # Try with cookies first, fallback to without if needed
-    try:
-        ydl_opts['cookiesfrombrowser'] = ('chrome',)
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            print("Starting download with cookies...")
-            info = ydl.extract_info(video_url, download=True)
-            filename = os.path.join(output_path, f"{info['title']}.m4a")
-            print("Download completed")
-            return process_audio(filename, output_path)
-    except Exception as e:
-        print(f"Download with cookies failed, trying without cookies: {e}")
-        del ydl_opts['cookiesfrombrowser']
+    # Try different strategies in order of preference
+    strategies = [
+        {
+            'name': 'cookies + web client',
+            'opts': {
+                **base_opts,
+                'format': 'bestaudio[ext=m4a]/bestaudio/best',
+                'cookiesfrombrowser': ('chrome',),
+                'extractor_args': {
+                    'youtube': {
+                        'player_client': ['web'],
+                    }
+                }
+            }
+        },
+        {
+            'name': 'cookies without client specification',
+            'opts': {
+                **base_opts,
+                'format': 'bestaudio[ext=m4a]/bestaudio/best',
+                'cookiesfrombrowser': ('chrome',),
+            }
+        },
+        {
+            'name': 'cookies + any available format',
+            'opts': {
+                **base_opts,
+                'format': 'bestaudio/worstaudio/best/worst',
+                'cookiesfrombrowser': ('chrome',),
+            }
+        },
+    ]
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        print("Starting download without cookies...")
-        info = ydl.extract_info(video_url, download=True)
-        filename = os.path.join(output_path, f"{info['title']}.m4a")
-        print("Download completed")
-        return process_audio(filename, output_path)
+    last_error = None
+    for strategy in strategies:
+        try:
+            print(f"Trying strategy: {strategy['name']}...")
+            with yt_dlp.YoutubeDL(strategy['opts']) as ydl:
+                info = ydl.extract_info(video_url, download=True)
+                filename = os.path.join(output_path, f"{info['title']}.m4a")
+                print("Download completed successfully")
+                return process_audio(filename, output_path)
+        except Exception as e:
+            last_error = e
+            print(f"Strategy '{strategy['name']}' failed: {str(e)[:100]}")
+            continue
+
+    # If all strategies failed, raise the last error
+    raise last_error if last_error else Exception("All download strategies failed")
 
 def main():
 
