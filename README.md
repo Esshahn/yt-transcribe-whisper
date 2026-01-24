@@ -18,7 +18,60 @@ This project automatically monitors a YouTube channel for new videos, downloads 
 - Chrome browser (for cookies)
 - Valid API keys and tokens
 
-## Installation
+## Docker Installation (Recommended)
+
+### Prerequisites
+- Docker and Docker Compose installed
+- Valid API keys and tokens
+
+### Setup
+
+1. Clone the repository:
+```bash
+git clone [your-repo-url]
+cd yt-transcribe-whisper
+```
+
+2. Create a `.env` file with your credentials:
+```bash
+cp .env.example .env
+# Edit .env with your actual API keys
+```
+
+3. Build and start the container:
+```bash
+docker compose build
+docker compose up -d
+```
+
+The container runs a cron job daily at 8:00 AM (Europe/Berlin timezone).
+
+### Manual Test Run
+```bash
+docker compose exec yt-transcribe python download_video.py
+```
+
+### Run Complete Pipeline Manually
+```bash
+docker compose exec yt-transcribe bash -c "python download_video.py && python transcribe_audio.py && python summarize_transcript.py && python slack_poster.py && python cleanup.py"
+```
+
+### View Logs
+```bash
+docker compose logs -f yt-transcribe
+# Or view cron logs inside container:
+docker compose exec yt-transcribe tail -f /var/log/cron.log
+```
+
+### Update Code
+Since the code is mounted as a volume, simply pull the latest changes:
+```bash
+git pull
+# Restart if dependencies changed:
+docker compose down && docker compose build && docker compose up -d
+```
+
+## Local Installation
 
 1. Clone the repository:
 ```bash

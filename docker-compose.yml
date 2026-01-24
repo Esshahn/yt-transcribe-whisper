@@ -1,0 +1,11 @@
+services:
+  yt-transcribe:
+    build: .
+    container_name: yt-transcribe
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - TZ=Europe/Berlin
+    restart: always

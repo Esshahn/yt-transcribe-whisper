@@ -3,11 +3,13 @@
 # Set working directory
 cd "$(dirname "$0")"
 
-# Activate virtual environment
-source venv/bin/activate
+# Activate virtual environment (skip if running in Docker)
+if [ -d "venv" ]; then
+    source venv/bin/activate
+fi
 
 # Update yt-dlp to latest version
-echo "Updating yt-dlp to latest version..."
+echo "$(date): Updating yt-dlp to latest version..."
 pip install --upgrade yt-dlp --quiet
 
 # Create logs directory if it doesn't exist
