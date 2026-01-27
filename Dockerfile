@@ -19,9 +19,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy crontab file
 COPY crontab /etc/cron.d/yt-transcribe
 
-# Set permissions and install crontab
-RUN chmod 0644 /etc/cron.d/yt-transcribe && \
-    crontab /etc/cron.d/yt-transcribe
+# Set permissions for cron.d file (no need for crontab command - cron reads /etc/cron.d/ directly)
+RUN chmod 0644 /etc/cron.d/yt-transcribe
 
 # Create log file
 RUN touch /var/log/cron.log

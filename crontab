@@ -1,4 +1,6 @@
+# Set PATH for cron (Python is in /usr/local/bin)
+PATH=/usr/local/bin:/usr/bin:/bin
+
 # Run yt-transcribe pipeline daily at 8:00 AM
 0 8 * * * root cd /app && ./process_videos.sh >> /var/log/cron.log 2>&1
 
-# Empty line required at end of crontab
